@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Borrowers</title></head>
+<body>
+<h1 id="page-title">Borrowers</h1>
+<p><a th:href="@{/borrowers/new}">Add borrower</a> | <a th:href="@{/}">Home</a></p>
+<table border="1" cellpadding="6">
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Phone</th><th>Village</th></tr>
+  </thead>
+  <tbody>
+    <tr th:each="b : ${borrowers}">
+      <td th:text="${b.id}"></td>
+      <td th:text="${b.name}"></td>
+      <td th:text="${b.phone}"></td>
+      <td th:text="${b.village}"></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(borrowers)}">
+      <td colspan="4">No borrowers yet.</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
