@@ -35,6 +35,8 @@ public class BorrowerController {
             model.addAttribute("error", "Name is required.");
             return "borrower-form";
         }
+        repository.save(borrower); 
+        borrower.setName(borrower.getName().trim());
         repository.save(borrower);
         return "redirect:/borrowers";
     }
