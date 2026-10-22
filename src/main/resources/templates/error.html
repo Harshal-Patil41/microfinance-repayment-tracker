@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Something went wrong</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="container py-5" style="max-width: 640px">
+  <div class="panel" data-testid="error-page">
+    <h1 th:text="${errorTitle != null} ? ${errorTitle} : 'Something went wrong'">Something went wrong</h1>
+    <p th:text="${errorMessage != null} ? ${errorMessage} : 'The page could not be displayed.'">message</p>
+    <a class="btn btn-brand" th:href="@{/dashboard}">Back to dashboard</a>
+  </div>
+</div>
+</body>
+</html>

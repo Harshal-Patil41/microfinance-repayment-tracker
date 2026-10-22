@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content, active)">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${title} + ' · Microfinance Tracker'">Microfinance Tracker</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <p class="brand-name">Repayment Tracker</p>
+      <div class="brand-sub">Microfinance · DevOps project</div>
+    </div>
+    <nav>
+      <a class="nav-link" id="nav-dashboard" th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
+      <a class="nav-link" id="nav-borrowers" th:href="@{/borrowers}" th:classappend="${active == 'borrowers'} ? 'active'">Borrowers</a>
+      <a class="nav-link" id="nav-add-borrower" th:href="@{/borrowers/new}" th:classappend="${active == 'add-borrower'} ? 'active'">Add borrower</a>
+      <a class="nav-link" id="nav-add-loan" th:href="@{/loans/new}" th:classappend="${active == 'add-loan'} ? 'active'">Create loan</a>
+      <a class="nav-link" id="nav-repayments" th:href="@{/repayments}" th:classappend="${active == 'repayments'} ? 'active'">Repayments</a>
+      <a class="nav-link" id="nav-alerts" th:href="@{/alerts}" th:classappend="${active == 'alerts'} ? 'active'">Alerts</a>
+      <a class="nav-link" id="nav-about" th:href="@{/about}" th:classappend="${active == 'about'} ? 'active'">DevOps info</a>
+    </nav>
+  </aside>
+  <div class="main-col">
+    <header class="topbar">
+      <strong th:text="${title}">Page</strong>
+      <span class="date" id="ledger-date" th:text="'Date: ' + ${#temporals.format(today, 'dd MMM yyyy')}">Date</span>
+    </header>
+    <main class="content">
+      <div th:if="${success}" class="alert alert-success" role="alert" data-testid="flash-success" th:text="${success}"></div>
+      <div th:if="${error}" class="alert alert-danger" role="alert" data-testid="flash-error" th:text="${error}"></div>
+      <section th:replace="${content}"></section>
+    </main>
+  </div>
+</div>
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

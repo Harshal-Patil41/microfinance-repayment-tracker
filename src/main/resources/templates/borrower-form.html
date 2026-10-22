@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Add borrower', ~{::section}, 'add-borrower')}">
+<body>
+<section>
+  <div class="page-head"><h1>Add borrower</h1></div>
+  <div class="panel form-narrow">
+    <form method="post" id="borrower-form" th:object="${borrower}" th:action="@{/borrowers}" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="name">Name</label>
+        <input class="form-control" id="name" th:field="*{name}" th:errorclass="is-invalid">
+        <div class="invalid-feedback" data-testid="error-name" th:errors="*{name}">error</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="phone">Phone (10 digits)</label>
+        <input class="form-control" id="phone" th:field="*{phone}" th:errorclass="is-invalid" inputmode="numeric">
+        <div class="invalid-feedback" data-testid="error-phone" th:errors="*{phone}">error</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="village">Village</label>
+        <input class="form-control" id="village" th:field="*{village}" th:errorclass="is-invalid">
+        <div class="invalid-feedback" data-testid="error-village" th:errors="*{village}">error</div>
+      </div>
+      <button class="btn btn-brand" type="submit" id="save-borrower">Save borrower</button>
+      <a class="btn btn-link" th:href="@{/borrowers}">Cancel</a>
+    </form>
+  </div>
+</section>
+</body>
+</html>

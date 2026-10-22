@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Borrowers', ~{::section}, 'borrowers')}">
+<body>
+<section>
+  <div class="page-head">
+    <div><h1>Borrowers</h1><p>Everyone who can take a loan.</p></div>
+    <a class="btn btn-brand" id="btn-add-borrower" th:href="@{/borrowers/new}">Add borrower</a>
+  </div>
+  <div class="panel">
+    <div class="table-responsive">
+      <table class="table ledger" data-testid="borrower-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Village</th></tr></thead>
+        <tbody>
+          <tr data-testid="borrower-row" th:each="b : ${borrowers}">
+            <td th:text="${b.id}">1</td>
+            <td th:text="${b.name}">name</td>
+            <td th:text="${b.phone}">phone</td>
+            <td th:text="${b.village}">village</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" data-testid="empty-state" th:if="${#lists.isEmpty(borrowers)}">No borrowers yet. Add the first one.</div>
+  </div>
+</section>
+</body>
+</html>
