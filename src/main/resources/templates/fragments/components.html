@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <span th:fragment="money(v)" class="money" th:text="'₹' + ${#numbers.formatDecimal(v, 1, 'COMMA', 2, 'POINT')}">₹0.00</span>
+  <span th:fragment="badge(status)" th:class="'badge rounded-pill status status-' + ${#strings.toLowerCase(status)}"
+        th:text="${status}">STATUS</span>
+</body>
+</html>
