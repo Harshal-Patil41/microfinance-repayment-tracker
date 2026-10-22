@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Repayments', ~{::section}, 'repayments')}">
+<body>
+<section>
+  <div class="page-head">
+    <div><h1>Repayments</h1><p>Installments from every repayment schedule, earliest due date first.</p></div>
+  </div>
+  <div class="mb-3 d-flex flex-wrap gap-2" data-testid="status-filter">
+    <a class="btn btn-sm" th:classappend="${status == null} ? 'btn-brand' : 'btn-outline-brand'" id="filter-all" th:href="@{/repayments}">All</a>
+    <a class="btn btn-sm" th:each="s : ${statuses}" th:id="'filter-' + ${#strings.toLowerCase(s)}"
+       th:classappend="${status == s} ? 'btn-brand' : 'btn-outline-brand'"
+       th:href="@{/repayments(status=${s})}" th:text="${s}">PAID</a>
+  </div>
+  <div class="panel">
+    <div class="table-responsive">
+      <table class="table ledger" data-testid="repayment-table">
+        <thead>
+          <tr><th>Loan</th><th>Borrower</th><th>Village</th><th>#</th><th>Due date</th>
+              <th class="num">Amount due</th><th class="num">Amount paid</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr data-testid="repayment-row" th:each="r : ${repayments}"
+              th:attr="data-borrower=${r.loan.borrower.name},data-status=${r.status}">
+            <td><a th:href="@{/loans/{id}(id=${r.loan.id})}" th:text="'#' + ${r.loan.id}">#1</a></td>
+            <td th:text="${r.loan.borrower.name}">name</td>
+            <td th:text="${r.loan.borrower.village}">village</td>
+            <td th:text="${r.installmentNo}">1</td>
+            <td th:text="${#temporals.format(r.dueDate, 'dd MMM yyyy')}">date</td>
+            <td class="num"><span th:replace="~{fragments/components :: money(${r.amountDue})}"></span></td>
+            <td class="num"><span th:replace="~{fragments/components :: money(${r.amountPaid})}"></span></td>
+            <td data-testid="repayment-status"><span th:replace="~{fragments/components :: badge(${r.status})}"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" data-testid="empty-state" th:if="${#lists.isEmpty(repayments)}">No records found.</div>
+  </div>
+</section>
+</body>
+</html>
