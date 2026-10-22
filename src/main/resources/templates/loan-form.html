@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Create loan', ~{::section}, 'add-loan')}">
+<body>
+<section>
+  <div class="page-head"><div><h1>Create loan</h1><p>The repayment schedule is generated automatically.</p></div></div>
+  <div class="panel form-narrow">
+    <form method="post" id="loan-form" th:object="${form}" th:action="@{/loans}" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="borrowerId">Borrower</label>
+        <select class="form-select" id="borrowerId" th:field="*{borrowerId}" th:errorclass="is-invalid">
+          <option value="">Select a borrower</option>
+          <option th:each="b : ${borrowers}" th:value="${b.id}" th:text="${b.name + ' · ' + b.village}">borrower</option>
+        </select>
+        <div class="invalid-feedback" th:errors="*{borrowerId}">error</div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label" for="amount">Loan amount (₹)</label>
+          <input class="form-control" type="number" step="0.01" id="amount" th:field="*{amount}" th:errorclass="is-invalid">
+          <div class="invalid-feedback" data-testid="error-amount" th:errors="*{amount}">error</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label" for="startDate">Start date</label>
+          <input class="form-control" type="date" id="startDate" th:field="*{startDate}" th:errorclass="is-invalid">
+          <div class="invalid-feedback" th:errors="*{startDate}">error</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label" for="installments">Number of installments</label>
+          <input class="form-control" type="number" id="installments" th:field="*{installments}" th:errorclass="is-invalid">
+          <div class="invalid-feedback" data-testid="error-installments" th:errors="*{installments}">error</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label" for="frequency">Frequency</label>
+          <select class="form-select" id="frequency" th:field="*{frequency}">
+            <option th:each="f : ${frequencies}" th:value="${f}" th:text="${f}">WEEKLY</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-brand" type="submit" id="save-loan">Create loan</button>
+      <a class="btn btn-link" th:href="@{/dashboard}">Cancel</a>
+    </form>
+  </div>
+</section>
+</body>
+</html>

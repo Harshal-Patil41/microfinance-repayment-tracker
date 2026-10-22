@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Loan details', ~{::section}, 'dashboard')}">
+<body>
+<section>
+  <div class="page-head">
+    <div>
+      <h1 data-testid="loan-title" th:text="'Loan #' + ${loan.loanId}">Loan #1</h1>
+      <p th:text="${loan.borrowerName + ' · ' + loan.village}">Borrower</p>
+    </div>
+  </div>
+  <div class="panel">
+    <dl class="kv">
+      <div><dt>Loan status</dt><dd data-testid="loan-status"><span th:replace="~{fragments/components :: badge(${loan.status})}"></span></dd></div>
+      <div><dt>Loan amount</dt><dd><span th:replace="~{fragments/components :: money(${loan.amount})}"></span></dd></div>
+      <div><dt>Amount paid</dt><dd data-testid="loan-paid"><span th:replace="~{fragments/components :: money(${loan.paid})}"></span></dd></div>
+      <div><dt>Installments</dt><dd th:text="${loan.installments + ' ' + loan.frequency}">10 WEEKLY</dd></div>
+      <div><dt>Start date</dt><dd th:text="${#temporals.format(loan.startDate, 'dd MMM yyyy')}">date</dd></div>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Repayment schedule</h2>
+    <div class="table-responsive">
+      <table class="table ledger" data-testid="schedule-table">
+        <thead>
+          <tr><th>#</th><th>Due date</th><th class="num">Amount due</th><th class="num">Amount paid</th><th>Status</th><th>Record payment</th></tr>
+        </thead>
+        <tbody>
+          <tr data-testid="installment-row" th:each="r : ${repayments}"
+              th:attr="data-repayment-id=${r.id},data-installment=${r.installmentNo}">
+            <td th:text="${r.installmentNo}">1</td>
+            <td th:text="${#temporals.format(r.dueDate, 'dd MMM yyyy')}">date</td>
+            <td class="num" data-testid="amount-due"><span th:replace="~{fragments/components :: money(${r.amountDue})}"></span></td>
+            <td class="num" data-testid="amount-paid"><span th:replace="~{fragments/components :: money(${r.amountPaid})}"></span></td>
+            <td data-testid="installment-status"><span th:replace="~{fragments/components :: badge(${r.status})}"></span></td>
+            <td>
+              <form method="post" class="d-flex gap-2" th:if="${r.status.name() != 'PAID'}"
+                    th:action="@{/repayments/{id}/pay(id=${r.id})}">
+                <input type="number" step="0.01" name="amountPaid" class="form-control form-control-sm" style="max-width:130px"
+                       placeholder="Amount" th:id="'amount-paid-' + ${r.id}">
+                <button type="submit" class="btn btn-sm btn-brand" th:id="'pay-btn-' + ${r.id}">Pay</button>
+              </form>
+              <span class="text-muted" th:if="${r.status.name() == 'PAID'}">Fully paid</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" th:if="${#lists.isEmpty(repayments)}">No schedule rows exist for this loan.</div>
+  </div>
+</section>
+</body>
+</html>
