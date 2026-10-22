@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('Dashboard', ~{::section}, 'dashboard')}">
+<body>
+<section>
+  <div class="page-head">
+    <div><h1>Dashboard</h1><p>All figures are calculated from the stored loans and repayments.</p></div>
+    <div>
+      <a class="btn btn-outline-brand" th:href="@{/borrowers/new}">Add borrower</a>
+      <a class="btn btn-brand" th:href="@{/loans/new}">Create loan</a>
+    </div>
+  </div>
+
+  <div class="stat-grid" data-testid="indicators">
+    <div class="stat">
+      <span class="stat-label">Total disbursed</span>
+      <span class="stat-value" id="total-disbursed" th:text="'₹' + ${#numbers.formatDecimal(ind.totalDisbursed, 1, 'COMMA', 2, 'POINT')}">₹0.00</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Total collected</span>
+      <span class="stat-value" id="total-collected" th:text="'₹' + ${#numbers.formatDecimal(ind.totalCollected, 1, 'COMMA', 2, 'POINT')}">₹0.00</span>
+    </div>
+    <a class="stat danger" id="overdue-link" th:href="@{/repayments(status='OVERDUE')}">
+      <span class="stat-label">Overdue repayments (click to list)</span>
+      <span class="stat-value" id="overdue-count" th:text="${ind.overdueCount}">0</span>
+    </a>
+    <div class="stat">
+      <span class="stat-label">Collection rate</span>
+      <span class="stat-value" id="collection-rate" th:text="${ind.collectionRate} + '%'">0%</span>
+    </div>
+  </div>
+
+  <div class="panel" data-testid="status-links">
+    <h2>Repayment status</h2>
+    <div class="legend">
+      <a id="paid-link" th:href="@{/repayments(status='PAID')}"><i class="dot" style="background:var(--st-paid)"></i>Paid <strong th:text="${ind.paidCount}">0</strong></a>
+      <a id="pending-link" th:href="@{/repayments(status='PENDING')}"><i class="dot" style="background:var(--marigold)"></i>Pending <strong th:text="${ind.pendingCount}">0</strong></a>
+      <a id="overdue-link-2" th:href="@{/repayments(status='OVERDUE')}"><i class="dot" style="background:var(--st-overdue)"></i>Overdue <strong th:text="${ind.overdueCount}">0</strong></a>
+    </div>
+  </div>
+
+  <form class="row g-2 mb-3" method="get" th:action="@{/dashboard}" id="search-form">
+    <div class="col-12 col-md-6">
+      <input type="search" class="form-control" id="search-box" name="q" th:value="${q}" placeholder="Search by borrower name or village">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-brand" type="submit" id="search-btn">Search</button>
+      <a class="btn btn-link" th:href="@{/dashboard}" th:if="${!#strings.isEmpty(q)}">Clear</a>
+    </div>
+  </form>
+
+  <div class="panel">
+    <h2>Loans</h2>
+    <div class="table-responsive">
+      <table class="table ledger" data-testid="loan-table">
+        <thead>
+          <tr><th>Loan</th><th>Borrower</th><th>Village</th><th class="num">Loan amount</th>
+              <th class="num">Amount paid</th><th>Installments</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr data-testid="loan-row" th:each="l : ${loans}" th:attr="data-loan-id=${l.loanId}">
+            <td><a th:href="@{/loans/{id}(id=${l.loanId})}" th:text="'#' + ${l.loanId}" data-testid="loan-link">#1</a></td>
+            <td th:text="${l.borrowerName}" data-testid="loan-borrower">name</td>
+            <td th:text="${l.village}">village</td>
+            <td class="num" data-testid="loan-amount"><span th:replace="~{fragments/components :: money(${l.amount})}"></span></td>
+            <td class="num"><span th:replace="~{fragments/components :: money(${l.paid})}"></span></td>
+            <td th:text="${l.installments + ' ' + l.frequency}">10 WEEKLY</td>
+            <td data-testid="loan-status"><span th:replace="~{fragments/components :: badge(${l.status})}"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" id="no-records" data-testid="empty-state" th:if="${#lists.isEmpty(loans)}">No records found.</div>
+  </div>
+</section>
+</body>
+</html>
