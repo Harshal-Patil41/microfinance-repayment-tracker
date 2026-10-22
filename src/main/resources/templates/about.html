@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout('DevOps information', ~{::section}, 'about')}">
+<body>
+<section>
+  <div class="page-head"><div><h1>DevOps information</h1><p>How this application is built, tested, shipped and provisioned.</p></div></div>
+  <div class="panel">
+    <h2>Runtime</h2>
+    <dl class="kv">
+      <div><dt>Version</dt><dd>1.0.0</dd></div>
+      <div><dt>Java</dt><dd th:text="${javaVersion}">17</dd></div>
+      <div><dt>Health endpoint</dt><dd><a th:href="@{/actuator/health}">/actuator/health</a></dd></div>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Delivery pipeline</h2>
+    <ol class="mb-0">
+      <li><strong>Git / GitHub</strong>: feature branches, pull requests into <code>develop</code>, releases tagged on <code>main</code>.</li>
+      <li><strong>Maven</strong>: <code>mvn clean test</code> and <code>mvn package</code> build <code>tracker.war</code>.</li>
+      <li><strong>Jenkins</strong>: build, unit tests, Selenium tests, Docker image, deploy, health check.</li>
+      <li><strong>Selenium</strong>: browser journeys run against an isolated instance on port 8083.</li>
+      <li><strong>Docker</strong>: versioned image, container on port 8082.</li>
+      <li><strong>Ansible</strong>: idempotent playbook provisions the node and deploys a chosen version.</li>
+    </ol>
+  </div>
+</section>
+</body>
+</html>

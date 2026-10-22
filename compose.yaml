@@ -1,0 +1,21 @@
+# Usage:  set IMAGE_TAG=1.0.0 && docker compose up -d --build     (Windows cmd)
+#         IMAGE_TAG=1.0.0 docker compose up -d --build            (Linux / WSL)
+services:
+  app:
+    image: ${IMAGE_NAME:-microfinance-tracker}:${IMAGE_TAG:-1.0.0}
+    build:
+      context: .
+      args:
+        APP_VERSION: ${IMAGE_TAG:-1.0.0}
+    container_name: microfinance-tracker
+    ports:
+      - "${HOST_PORT:-8082}:8081"      # host 8082 -> container 8081 (Jenkins keeps 8080)
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      APP_DATA_DIR: /data
+    volumes:
+      - tracker-data:/data             # H2 file database survives container re-creation
+    restart: unless-stopped
+
+volumes:
+  tracker-data:

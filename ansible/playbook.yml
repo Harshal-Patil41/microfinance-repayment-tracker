@@ -1,0 +1,126 @@
+---
+# Provision a Linux host and deploy a specific release of the app with Docker Compose.
+# Run:   ansible-playbook playbook.yml            (deploys app_version from group_vars/all.yml)
+#        ansible-playbook playbook.yml -e app_version=1.0.1
+# Roll back: ansible-playbook playbook.yml -e app_version=<previous version>
+- name: Provision and deploy Microfinance Repayment Tracker (tracker.war in Docker)
+  hosts: app_servers
+  become: true
+
+  tasks:
+    - name: Install runtime packages (Docker engine, compose plugin, curl)
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - curl
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      tags: [packages]
+
+    - name: Ensure the Docker service is enabled and running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+      tags: [packages]
+
+    - name: Create dedicated application group
+      ansible.builtin.group:
+        name: "{{ app_group }}"
+        system: true
+        state: present
+      tags: [user]
+
+    - name: Create dedicated application user
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        state: present
+      tags: [user]
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0755"
+      tags: [config]
+
+    - name: Render Docker Compose file for the requested release
+      ansible.builtin.template:
+        src: compose.yaml.j2
+        dest: "{{ app_dir }}/compose.yaml"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0644"
+      notify: Recreate application container
+      tags: [config]
+
+    - name: Render environment file (no secrets)
+      ansible.builtin.template:
+        src: app.env.j2
+        dest: "{{ app_dir }}/app.env"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0640"
+      notify: Recreate application container
+      tags: [config]
+
+    - name: Pull the release image from the registry (only when a registry image is configured)
+      community.docker.docker_image:
+        name: "{{ app_registry_image }}"
+        tag: "{{ app_version }}"
+        source: pull
+      when: app_registry_image | length > 0
+      tags: [deploy]
+
+    - name: Verify the image exists on the host (build it first for local demos)
+      community.docker.docker_image_info:
+        name: "{{ (app_registry_image if app_registry_image | length > 0 else app_image_name) ~ ':' ~ app_version }}"
+      register: image_info
+      tags: [deploy]
+
+    - name: Fail early with a helpful message if the image is missing
+      ansible.builtin.fail:
+        msg: >-
+          Image {{ app_image_name }}:{{ app_version }} not found on this host.
+          Build it with: docker build -t {{ app_image_name }}:{{ app_version }} <project-dir>
+          or set app_registry_image to pull it from a registry.
+      when: image_info.images | length == 0
+      tags: [deploy]
+
+    - name: Ensure the application container is running
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+      register: compose_result
+      tags: [deploy]
+
+    - name: Wait for the application health endpoint to report UP
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/actuator/health"
+        return_content: true
+      register: health
+      until: health.status == 200 and (health.json.status | default('')) == 'UP'
+      retries: "{{ health_retries }}"
+      delay: "{{ health_delay }}"
+      changed_when: false
+      tags: [health]
+
+    - name: Report deployed release
+      ansible.builtin.debug:
+        msg: "Release {{ app_version }} is healthy at http://localhost:{{ app_port }}/"
+      tags: [health]
+
+  handlers:
+    - name: Recreate application container
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+        recreate: always
