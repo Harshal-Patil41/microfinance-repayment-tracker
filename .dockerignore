@@ -1,0 +1,10 @@
+.git
+target
+selenium-tests
+screenshots
+docs
+ansible
+Jenkinsfile
+*.md
+data
+*.log
