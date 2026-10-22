@@ -1,0 +1,18 @@
+---
+# Release to deploy. Override per run:  -e app_version=1.0.1
+# Roll back by re-running with the previous known-good version.
+app_version: "1.0.0"
+app_image_name: "microfinance-tracker"
+# Optional registry path, e.g. "yourhubuser/microfinance-tracker". Empty = use the image already on the host.
+app_registry_image: ""
+app_port: 8082            # host port; the container listens on 8081 internally
+
+app_user: "mfi"
+app_group: "mfi"
+app_dir: "/opt/tracker"
+
+app_spring_profile: "prod"
+
+health_retries: 20
+health_delay: 3
+# No passwords or tokens belong in this file. Use ansible-vault if you ever add secrets.

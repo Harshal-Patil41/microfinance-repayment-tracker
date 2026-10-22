@@ -1,0 +1,16 @@
+# Managed by Ansible: do not edit by hand.
+services:
+  app:
+    image: {{ app_registry_image if app_registry_image | length > 0 else app_image_name }}:{{ app_version }}
+    container_name: microfinance-tracker
+    ports:
+      - "{{ app_port }}:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: "{{ app_spring_profile }}"
+      APP_DATA_DIR: /data
+    volumes:
+      - tracker-data:/data
+    restart: unless-stopped
+
+volumes:
+  tracker-data:
