@@ -69,7 +69,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                osRun('git log -1 --pretty=format:"%h %an %s"', 'git log -1 --pretty=format:"%h %an %s"')
+                osRun('git log -1 --pretty=format:"%h %an %s"', 'git log -1 --pretty=format:"%%h %%an %%s"')
             }
         }
 
@@ -134,10 +134,10 @@ pipeline {
             steps {
                 script {
                     // Remember the running tag so a failed health check can roll back to it.
-                    env.PREV_TAG = isUnix()
+                    def prev = isUnix()
                         ? sh(returnStdout: true, script: "docker inspect --format '{{.Config.Image}}' ${env.APP_NAME} 2>/dev/null | awk -F: '{print \$NF}' || true").trim()
-                        : bat(returnStdout: true, script: "@docker inspect --format \"{{.Config.Image}}\" ${env.APP_NAME} 2>nul || echo").trim().tokenize(':').last()
-                    if (env.PREV_TAG == null || env.PREV_TAG.contains(' ') || env.PREV_TAG == 'echo') { env.PREV_TAG = '' }
+                        : bat(returnStdout: true, script: "@docker inspect --format \"{{.Config.Image}}\" ${env.APP_NAME} 2>nul || exit /b 0").trim()
+                    env.PREV_TAG = (prev && !prev.contains(' ') && prev.contains(':')) ? prev.tokenize(':').last() : ''
                     echo "Previously deployed tag: '${env.PREV_TAG}'"
                 }
                 osRun('IMAGE_NAME=${APP_NAME} IMAGE_TAG=${IMAGE_TAG} HOST_PORT=${HOST_PORT} docker compose up -d --no-build',
@@ -154,7 +154,7 @@ pipeline {
     post {
         failure {
             echo 'Build FAILED. Container logs (if any):'
-            osRun('docker logs --tail 50 ${APP_NAME} || true', 'docker logs --tail 50 %APP_NAME% || echo no container')
+            osRun('docker logs --tail 50 ${APP_NAME} || true', 'docker logs --tail 50 %APP_NAME% || exit /b 0')
             script {
                 if (params.DEPLOY && env.PREV_TAG?.trim() && env.PREV_TAG != env.IMAGE_TAG) {
                     echo "Rolling back to ${env.PREV_TAG}"
