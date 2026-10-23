@@ -2,7 +2,7 @@
 // Works on a Windows or a Linux Jenkins agent. Agent needs: JDK 17, Maven, Chrome, Docker (+ compose plugin), Git.
 // No secrets in this file: Docker Hub login uses the Jenkins credential with id "dockerhub-creds".
 
-def run(String unixCmd, String winCmd) {
+def osRun(String unixCmd, String winCmd) {
     if (isUnix()) { sh unixCmd } else { bat winCmd }
 }
 
@@ -69,24 +69,24 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                run('git log -1 --pretty=format:"%h %an %s"', 'git log -1 --pretty=format:"%h %an %s"')
+                osRun('git log -1 --pretty=format:"%h %an %s"', 'git log -1 --pretty=format:"%%h %%an %%s"')
             }
         }
 
         stage('Validate environment') {
             steps {
-                run('java -version && mvn -version && docker --version && docker compose version',
+                osRun('java -version && mvn -version && docker --version && docker compose version',
                     'java -version && mvn -version && docker --version && docker compose version')
             }
         }
 
         stage('Build and unit tests') {
-            steps { run('mvn -B clean test', 'mvn -B clean test') }
+            steps { osRun('mvn -B clean test', 'mvn -B clean test') }
             post { always { junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: false } }
         }
 
         stage('Package WAR') {
-            steps { run('mvn -B -DskipTests package', 'mvn -B -DskipTests package') }
+            steps { osRun('mvn -B -DskipTests package', 'mvn -B -DskipTests package') }
             post { success { archiveArtifacts artifacts: 'target/tracker.war', fingerprint: true } }
         }
 
@@ -94,7 +94,7 @@ pipeline {
             steps {
                 startSeleniumApp(env.SELENIUM_PORT)
                 waitForHealth(env.SELENIUM_PORT)
-                run("mvn -B -f selenium-tests/pom.xml test -DbaseUrl=http://localhost:${env.SELENIUM_PORT} -Dheadless=true",
+                osRun("mvn -B -f selenium-tests/pom.xml test -DbaseUrl=http://localhost:${env.SELENIUM_PORT} -Dheadless=true",
                     "mvn -B -f selenium-tests/pom.xml test -DbaseUrl=http://localhost:${env.SELENIUM_PORT} -Dheadless=true")
             }
             post {
@@ -108,7 +108,7 @@ pipeline {
 
         stage('Build Docker image') {
             steps {
-                run('docker build --build-arg APP_VERSION=${IMAGE_TAG} -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest .',
+                osRun('docker build --build-arg APP_VERSION=${IMAGE_TAG} -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest .',
                     'docker build --build-arg APP_VERSION=%IMAGE_TAG% -t %APP_NAME%:%IMAGE_TAG% -t %APP_NAME%:latest .')
             }
         }
@@ -117,7 +117,7 @@ pipeline {
             when { expression { params.PUSH_IMAGE && params.DOCKERHUB_USER?.trim() } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-                    run('''echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+                    osRun('''echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
                            docker tag ${APP_NAME}:${IMAGE_TAG} ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}
                            docker push ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}
                            docker logout''',
@@ -134,13 +134,13 @@ pipeline {
             steps {
                 script {
                     // Remember the running tag so a failed health check can roll back to it.
-                    env.PREV_TAG = isUnix()
+                    def prev = isUnix()
                         ? sh(returnStdout: true, script: "docker inspect --format '{{.Config.Image}}' ${env.APP_NAME} 2>/dev/null | awk -F: '{print \$NF}' || true").trim()
-                        : bat(returnStdout: true, script: "@docker inspect --format \"{{.Config.Image}}\" ${env.APP_NAME} 2>nul || echo").trim().tokenize(':').last()
-                    if (env.PREV_TAG == null || env.PREV_TAG.contains(' ') || env.PREV_TAG == 'echo') { env.PREV_TAG = '' }
+                        : bat(returnStdout: true, script: "@docker inspect --format \"{{.Config.Image}}\" ${env.APP_NAME} 2>nul || exit /b 0").trim()
+                    env.PREV_TAG = (prev && !prev.contains(' ') && prev.contains(':')) ? prev.tokenize(':').last() : ''
                     echo "Previously deployed tag: '${env.PREV_TAG}'"
                 }
-                run('IMAGE_NAME=${APP_NAME} IMAGE_TAG=${IMAGE_TAG} HOST_PORT=${HOST_PORT} docker compose up -d --no-build',
+                osRun('IMAGE_NAME=${APP_NAME} IMAGE_TAG=${IMAGE_TAG} HOST_PORT=${HOST_PORT} docker compose up -d --no-build',
                     'set IMAGE_NAME=%APP_NAME%&& set IMAGE_TAG=%IMAGE_TAG%&& set HOST_PORT=%HOST_PORT%&& docker compose up -d --no-build')
             }
         }
@@ -154,11 +154,11 @@ pipeline {
     post {
         failure {
             echo 'Build FAILED. Container logs (if any):'
-            run('docker logs --tail 50 ${APP_NAME} || true', 'docker logs --tail 50 %APP_NAME% || echo no container')
+            osRun('docker logs --tail 50 ${APP_NAME} || true', 'docker logs --tail 50 %APP_NAME% || exit /b 0')
             script {
                 if (params.DEPLOY && env.PREV_TAG?.trim() && env.PREV_TAG != env.IMAGE_TAG) {
                     echo "Rolling back to ${env.PREV_TAG}"
-                    run('IMAGE_NAME=${APP_NAME} IMAGE_TAG=${PREV_TAG} HOST_PORT=${HOST_PORT} docker compose up -d --no-build || true',
+                    osRun('IMAGE_NAME=${APP_NAME} IMAGE_TAG=${PREV_TAG} HOST_PORT=${HOST_PORT} docker compose up -d --no-build || true',
                         'set IMAGE_NAME=%APP_NAME%&& set IMAGE_TAG=%PREV_TAG%&& set HOST_PORT=%HOST_PORT%&& docker compose up -d --no-build')
                 }
             }
