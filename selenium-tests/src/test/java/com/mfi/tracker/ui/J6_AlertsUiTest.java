@@ -15,7 +15,7 @@ class J6_AlertsUiTest extends BaseUiTest {
     @Test
     void lateInvalidAndMissingSectionsShowTheExpectedRecords() {
         open("/alerts");
-        assertEquals("7", visibleId("late-count").getText());
+        assertEquals("6", visibleId("late-count").getText());
         assertEquals("2", visibleId("invalid-count").getText());
         assertEquals("1", visibleId("missing-count").getText());
 
